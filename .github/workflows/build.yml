@@ -79,4 +79,4 @@ jobs:
         context: .
         file: ./src/Dockerfile
         push: true
-        tags: ghcr.io/nager/${{ env.REPOSITORY_LOWERCASE }}:latest
+        tags: ghcr.io/${{ env.REPOSITORY_LOWERCASE }}:latest
