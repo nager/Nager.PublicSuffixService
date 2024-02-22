@@ -70,10 +70,13 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    - name: downcase GITHUB_REPOSITORY
+      run: |
+        echo "REPOSITORY_LOWERCASE=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
     - name: Build and push
       uses: docker/build-push-action@v5
       with:
         context: .
         file: ./src/Dockerfile
         push: true
-        tags: ghcr.io/${{ github.repository }}:latest
+        tags: ghcr.io/nager/${REPOSITORY_LOWERCASE}:latest
