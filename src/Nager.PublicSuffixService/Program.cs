@@ -17,6 +17,7 @@ builder.Services.AddSingleton<ICacheProvider, LocalFileSystemCacheProvider>();
 builder.Services.AddSingleton<IRuleProvider, CachedHttpRuleProvider>();
 builder.Services.AddSingleton<IDomainParser, DomainParser>();
 builder.Services.AddScoped<GitHubClient>();
+
 builder.Services.AddMemoryCache();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -36,6 +37,11 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(configura
 {
     configuration.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
+
+var logger = LoggerFactory.Create(config =>
+{
+    config.AddConsole();
+}).CreateLogger("Program");
 
 var app = builder.Build();
 
@@ -57,6 +63,8 @@ if (app.Environment.IsDevelopment())
 app.MapGet("/DomainInfo/{domain}", (string domain, IDomainParser domainParser) =>
 {
     domain = HttpUtility.UrlEncode(domain);
+
+    logger.LogInformation($"Get DomainInfo for {domain}");
 
     var domainInfo = domainParser.Parse(domain);
     return domainInfo;
