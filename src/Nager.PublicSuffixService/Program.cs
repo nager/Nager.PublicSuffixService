@@ -1,9 +1,12 @@
+using Microsoft.Extensions.Caching.Memory;
 using Nager.PublicSuffix;
 using Nager.PublicSuffix.RuleProviders;
 using Nager.PublicSuffix.RuleProviders.CacheProviders;
 using Nager.PublicSuffix.WebApi.GitHub;
 using System.Text.Json.Serialization;
 using System.Web;
+
+var corsPolicyName = "ApiPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,14 +17,24 @@ builder.Services.AddSingleton<ICacheProvider, LocalFileSystemCacheProvider>();
 builder.Services.AddSingleton<IRuleProvider, CachedHttpRuleProvider>();
 builder.Services.AddSingleton<IDomainParser, DomainParser>();
 builder.Services.AddScoped<GitHubClient>();
+builder.Services.AddMemoryCache();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(opt =>
+builder.Services.AddCors(configuration =>
+    configuration.AddPolicy(corsPolicyName, builder =>
+    {
+        builder.AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+    })
+);
+
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(configuration =>
 {
-    opt.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    configuration.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
 var app = builder.Build();
@@ -31,6 +44,8 @@ if (ruleProvider != null)
 {
     await ruleProvider.BuildAsync();
 }
+
+app.UseCors(corsPolicyName);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -49,17 +64,33 @@ app.MapGet("/DomainInfo/{domain}", (string domain, IDomainParser domainParser) =
 .WithName("DomainInfo")
 .WithOpenApi();
 
-app.MapPost("/CheckLastCommit", async (GitHubClient gitHubClient, CancellationToken cancellationToken) =>
+app.MapPost("/CheckLastCommit", async (GitHubClient gitHubClient, IMemoryCache memoryCache, CancellationToken cancellationToken) =>
 {
+    memoryCache.TryGetValue<DateTime>("lastCheckTime", out var lastCheckTime);
+    if (lastCheckTime > DateTime.UtcNow.AddMinutes(-1))
+    {
+        return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+    }
+
+    memoryCache.Set("lastCheckTime", DateTime.UtcNow);
+
     var lastGitHubCommit = await gitHubClient.GetCommitAsync("publicsuffix", "list", "master", cancellationToken);
 
-    return lastGitHubCommit?.Commit?.Committer?.Date;
+    return Results.Content(lastGitHubCommit?.Commit?.Committer?.Date?.ToString());
 })
 .WithName("CheckLastCommit")
 .WithOpenApi();
 
-app.MapPost("/UpdateRules", async (IRuleProvider ruleProvider) =>
+app.MapPost("/UpdateRules", async (IRuleProvider ruleProvider, IMemoryCache memoryCache) =>
 {
+    memoryCache.TryGetValue<DateTime>("lastUpdateTime", out var lastUpdateTime);
+    if (lastUpdateTime > DateTime.UtcNow.AddMinutes(-10))
+    {
+        return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+    }
+
+    memoryCache.Set("lastUpdateTime", DateTime.UtcNow);
+
     await ruleProvider.BuildAsync(ignoreCache: true);
     return Results.NoContent();
 })
