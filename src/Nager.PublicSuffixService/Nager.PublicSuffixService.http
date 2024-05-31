@@ -13,3 +13,9 @@ GET {{Nager.PublicSuffix.WebApi_HostAddress}}/DomainInfo/s3-1.amazonaws.com/
 Accept: application/json
 
 ###
+
+
+OPTIONS {{Nager.PublicSuffix.WebApi_HostAddress}}/DomainInfo/s3-1.amazonaws.com/
+Accept: application/json
+
+###

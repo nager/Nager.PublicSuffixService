@@ -28,8 +28,8 @@ builder.Services.AddCors(configuration =>
     configuration.AddPolicy(corsPolicyName, builder =>
     {
         builder.AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader();
+               .AllowAnyMethod()
+               .AllowAnyHeader();
     })
 );
 
