@@ -3,8 +3,6 @@
 **Nager.PublicSuffixService** is an open-source .NET service that provides the [Public Suffix List (PSL)](https://publicsuffix.org/) as a **ready-to-use Web API**.  
 It allows you to parse domains, extract effective TLDs, subdomains, and registrable domains, while keeping the PSL up to date.  
 
----
-
 ## ✨ Features  
 
 - 🌍 Provides the Public Suffix List as a Web API.  
@@ -12,8 +10,6 @@ It allows you to parse domains, extract effective TLDs, subdomains, and registra
 - 🔄 Automatic updates of PSL rules from [publicsuffix/list](https://github.com/publicsuffix/list).  
 - ⚡ Rate-limited endpoints for commit checks and rule updates.  
 - 🚀 Easy deployment via **Docker**.  
-
----
 
 ## 📦 Installation (Docker)  
 
@@ -34,8 +30,6 @@ The API will now be available at:
 ```
 http://localhost:8080
 ```
-
----
 
 ## 🚀 API Endpoints
 
@@ -67,8 +61,6 @@ GET /DomainInfo/example.co.uk
 }
 ```
 
----
-
 ### 🔹 `POST /CheckLastCommit`
 
 Checks the latest commit timestamp of the [publicsuffix/list](https://github.com/publicsuffix/list).
@@ -80,8 +72,6 @@ Rate-limited to **1 request per minute**.
 2025-08-28T07:13:21Z
 ```
 
----
-
 ### 🔹 `POST /UpdateRules`
 
 Forces an update of the public suffix rules from the upstream repository.
@@ -92,8 +82,6 @@ Rate-limited to **1 request every 10 minutes**.
 ```
 204 No Content
 ```
-
----
 
 ## 📜 License
 
